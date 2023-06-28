@@ -1,5 +1,6 @@
 import mqtt_device
 import time
+import json
 class Display(mqtt_device.MqttDevice):
     """Displays the number of cars and the temperature"""
     def __init__(self, config):
@@ -8,16 +9,16 @@ class Display(mqtt_device.MqttDevice):
         self.client.subscribe('display')
         self.client.loop_forever()
 
-    def display(self, *args):
+    def display(self, data):
         print('*' * 20)
-        for val in args:
-            print(val)
-            time.sleep(1)
-
+        print('Free Spaces:', data['free_spaces'])
+        print('Temperature:', data['temperature'])
+        print('Time:', data['time'])
         print('*' * 20)
     def on_message(self, client, userdata, msg):
-       data = msg.payload.decode()
-       self.display(*data.split(','))
+       payload = msg.payload.decode()
+       data = json.loads(payload)
+       self.display(data)
        # TODO: Parse the message and extract free spaces,\
        #  temperature, time
 if __name__ == '__main__':

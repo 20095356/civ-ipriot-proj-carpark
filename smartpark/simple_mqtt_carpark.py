@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 
 import random
@@ -33,20 +34,14 @@ class CarPark(mqtt_device.MqttDevice):
         self._temperature = random.choice(range(10, 40))
 
     def _publish_event(self):
-        readable_time = datetime.now().strftime('%H:%M')
-        print(
-            (
-                    f"TIME: {readable_time}, "
-                    + f"SPACES: {self.available_spaces}, "
-                    + f"TEMPC:{self.temperature}"
-            )
-        )
-        message = (
-                f"TIME: {readable_time}, "
-                + f"SPACES: {self.available_spaces}, "
-                + f"TEMPC:{self.temperature}"
-        )
-        self.client.publish('display', message)
+       readable_time = datetime.now().strftime('%H:%M')
+       data = {
+           'time': readable_time,
+           'space': self.available_spaces,
+           'temperature': self.temperature
+       }
+       message = json.dumps(data)
+       self.client.publish('display', message)
 
     def on_car_entry(self):
         self.total_cars += 1
@@ -58,9 +53,10 @@ class CarPark(mqtt_device.MqttDevice):
 
     def on_message(self, client, userdata, msg: MQTTMessage):
         payload = msg.payload.decode()
+        data = json.loads(payload)
         # TODO: Extract temperature from payload
 
-        self.temperature = payload
+        self.temperature = data['temperature']
         if 'exit' in payload:
             self.on_car_exit()
         else:
